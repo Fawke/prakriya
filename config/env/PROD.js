@@ -90,13 +90,50 @@ let basedata = {
       code: "WAVES"
     }
   ],
-  ADMIN_ROLE: {
-    name: "admin",
-    controls: [
-      "USERS",
-      "ROLES"
-    ]
-  },
+  BASIC_ROLES: [
+    {
+      name: "admin",
+      controls: [
+        "USERS",
+        "ROLES"
+      ]
+    },
+    {
+      name: "wiproadmin",
+      controls: [
+        "CANDIDATES",
+        "BULK_UPLOAD"
+      ]
+    },
+    {
+      name: "sradmin",
+      controls: [
+        "CANDIDATES",
+        "MENTOR_CONN",
+        "ATTENDANCE",
+        "WAVES"
+      ]
+    },
+    {
+      name: "mentor",
+      controls: [
+        "MENTOR_CONN",
+        "PROJECTS",
+        "COURSES",
+        "PROG_FLOW",
+        "ASSG_TRACKER",
+        "EVAL_FORMS"
+      ]
+    },
+    {
+      name: "candidate",
+      controls: [
+        "MY_PROF",
+        "FEEDBACK",
+        "ATTENDANCE"
+      ]
+    }
+  ],
   ADMIN_USER: {
     username: "admin",
     password: "admin",

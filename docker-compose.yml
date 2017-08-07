@@ -58,8 +58,8 @@ services:
     image: neo4j:3.1.5
     network_mode: host
     restart: always
-    environment:
-      - NEO4J_AUTH=neo4j/neo4js
+    env_file:
+      - ./prakriya.env
     cap_add:
       - SYS_RESOURCE
     expose:
