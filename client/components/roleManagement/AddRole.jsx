@@ -7,32 +7,9 @@ import TextField from 'material-ui/TextField';
 import Checkbox from 'material-ui/Checkbox';
 import {Grid, Row, Col} from 'react-flexbox-grid';
 import app from '../../styles/app.json';
+import dialog from '../../styles/dialog.json';
 
 const styles = {
-	dialog: {
-		backgroundColor: '#DDDBF1',
-		borderBottom: '3px solid teal',
-		borderRight: '10px solid teal',
-		borderLeft: '10px solid teal'
-	},
-	dialogTitle: {
-		fontWeight: 'bold',
-		backgroundColor: 'teal',
-		color: '#DDDBF1',
-		textAlign: 'center'
-	},
-	actionsContainer: {
-		backgroundColor: 'teal',
-		borderTop: '0px',
-		marginTop: '0px'
-	},
-	actionButton: {
-		backgroundColor: '#DDDBF1',
-		width: '50%',
-		color: 'teal',
-		border: '1px solid teal',
-		height: '100%'
-	},
 	accessControlsNoError: {
 
 	},
@@ -41,6 +18,16 @@ const styles = {
 	}
 };
 
+let wiproadminControls = ['Candidates', 'Bulk Upload'];
+let sradminControls = [
+	'Waves', 'Candidates', 'Mentor Connect', 'Attendance'
+];
+let mentorControls = [
+	'Projects', 'Courses', 'Assessment Tracker', 'Evaluation Forms',
+	'Mentor Connect', 'Program Flow'
+];
+let candidateControls = ['My Profile', 'Attendace', 'Feedback'];
+
 export default class AddRole extends React.Component {
 	constructor(props) {
 		super(props)
@@ -48,6 +35,7 @@ export default class AddRole extends React.Component {
 	    open: false,
 	    role:'',
 			roleErrorText: '',
+			controls: [],
 	    actions: [],
 			accessControlsText: 'Access Controls',
 			accessControlsStyle: styles.accessControlsNoError
@@ -57,6 +45,17 @@ export default class AddRole extends React.Component {
 	  this.onChangeRole = this.onChangeRole.bind(this);
 	  this.onChangeActions = this.onChangeActions.bind(this);
 	  this.handleSubmit = this.handleSubmit.bind(this);
+	  this.setRecommendedControls = this.setRecommendedControls.bind(this);
+	}
+
+	componentWillReceiveProps(nextProps) {
+		let controls = nextProps.controls;
+		controls.map(function(control) {
+			control.checked = false
+		});
+		this.setState({
+			controls: controls
+		});
 	}
 
 	handleOpen() {
@@ -86,32 +85,35 @@ export default class AddRole extends React.Component {
   }
 
   onChangeRole(e) {
+		this.setRecommendedControls(e.target.value.toLowerCase());
   	this.setState({
   		role: e.target.value,
 			roleErrorText: ''
-  	})
+  	});
   }
 
   onChangeActions(event, isChecked) {
-		let actionList = this.state.actions
+		event.persist();
+		let val = event.target.value;
+		let actionList = this.state.actions;
+		let controls = this.state.controls;
+		controls.some(function(control) {
+			if(control.name == val) control.checked = isChecked;
+			return control.name == val;
+		});
 		if(isChecked) {
 			actionList.push(event.target.value)
-			this.setState({
-				actions: actionList,
-				accessControlsText: 'Access Controls',
-				accessControlsStyle: styles.accessControlsNoError
-			})
-		}
-		else {
+		} else {
 			actionList = this.state.actions.filter(function(item) {
 				return item != event.target.value;
 			})
-			this.setState({
-				actions: actionList,
-				accessControlsText: 'Access Controls',
-				accessControlsStyle: styles.accessControlsNoError
-			})
 		}
+		this.setState({
+			controls: controls,
+			actions: actionList,
+			accessControlsText: 'Access Controls',
+			accessControlsStyle: styles.accessControlsNoError
+		})
 	}
 
 	handleSubmit() {
@@ -122,7 +124,7 @@ export default class AddRole extends React.Component {
 			if(th.state.actions.indexOf(control.name) >= 0)
 				controlsCode.push(control.code)
 		})
-		roleObj.name = this.state.role.toLowerCase()
+		roleObj.name = this.state.role.toLowerCase();
 		roleObj.controls = controlsCode
 		this.setState({
 			actions: []
@@ -146,19 +148,48 @@ export default class AddRole extends React.Component {
 		return false
 	}
 
+	setRecommendedControls(role) {
+
+		let controls = this.state.controls;
+		let actions = this.state.actions;
+
+		controls.map(function(control) {
+			if(role == 'mentor') {
+				if(mentorControls.indexOf(control.name) > -1) {
+					control.checked = true;
+					actions.push(control.name);
+				}
+			} else if(role == 'wiproadmin') {
+				if(wiproadminControls.indexOf(control.name) > -1) {
+					control.checked = true;
+					actions.push(control.name);
+				}
+			} else if(role == 'sradmin') {
+				if(sradminControls.indexOf(control.name) > -1) {
+					control.checked = true;
+					actions.push(control.name);
+				}
+			} else if(role == 'candidate') {
+				if(candidateControls.indexOf(control.name) > -1) {
+					control.checked = true;
+					actions.push(control.name);
+				}
+			}
+		})
+	}
+
 	render() {
 		let th = this
-
 		const dialogActions = [
       <FlatButton
         label='Cancel'
         onTouchTap={(e)=>{this.handleClose(e, 'CLOSE')}}
-				style={styles.actionButton}
+				style={dialog.actionButton}
       />,
       <FlatButton
         label='Add'
         onTouchTap={(e)=>{this.handleClose(e, 'ADD')}}
-				style={styles.actionButton}
+				style={dialog.actionButton}
       />,
     ]
 
@@ -168,15 +199,15 @@ export default class AddRole extends React.Component {
 		      <ContentAdd />
 		    </FloatingActionButton>
 		    <Dialog
-					bodyStyle={styles.dialog}
+					bodyStyle={dialog.body}
           title='ADD A NEW ROLE'
-					titleStyle={styles.dialogTitle}
+					titleStyle={dialog.title}
           actions={dialogActions}
           modal={false}
           open={this.state.open}
           onRequestClose={(e)=>{this.handleClose(e, 'CLOSE')}}
           autoScrollBodyContent={true}
-					actionsContainerStyle={styles.actionsContainer}
+					actionsContainerStyle={dialog.actionsContainer}
         >
           <TextField
           	floatingLabelText='Role *'
@@ -189,12 +220,13 @@ export default class AddRole extends React.Component {
 					<div style={{border: '2px solid white', padding: '5px', textAlign: 'justify', boxSizing: 'border-box'}}>
           <p style={this.state.accessControlsStyle}>{this.state.accessControlsText}</p>
           {
-          	this.props.controls.map(function(control, index) {
+          	this.state.controls.map(function(control, index) {
           		return(
 	          		<Checkbox
 									label={control.name}
 									value={control.name}
 									onCheck={th.onChangeActions}
+									checked={control.checked}
 									key={index}
 									style={{width: '30%', display: 'inline-block'}}
 								/>

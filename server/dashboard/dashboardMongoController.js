@@ -297,6 +297,14 @@ let saveEvaluation = function (evaluationObj, successCB, errorCB) {
 	});
 };
 
+let getEvaluation = function(emailID, successCB, errorCB) {
+	EvaluationModel.find({cadetID: emailID}, function(err, result) {
+		if(err) {
+			errorCB(err);
+		}
+		successCB(result);
+	});
+}
 
 /** **************************************************
 *******          Attendance         ********
@@ -625,6 +633,7 @@ module.exports = {
 	getFeedback,
 	getFeedbacks,
 	saveEvaluation,
+	getEvaluation,
 	getWaveIDs,
 	getWaveSpecificCandidates,
 	updateAbsentees,

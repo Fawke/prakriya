@@ -10,6 +10,7 @@ import dialog from '../../styles/dialog.json';
 import Paper from 'material-ui/Paper';
 import Chip from 'material-ui/Chip';
 import AutoComplete from 'material-ui/AutoComplete';
+import Snackbar from 'material-ui/Snackbar';
 
 const styles = {
   dialog: {
@@ -76,23 +77,28 @@ export default class CourseCard extends React.Component {
       WeekErrorText: '',
       Duration: '',
       DurationErrorText: '',
-      searchPerm: '',
+      Skill: '',
       Day: '',
-      DayErrorText: ''
+      DayErrorText: '',
+      snackbarOpen: false,
+			snackbarMessage: ''
 		}
-  this.handleClose = this.handleClose.bind(this);
-  this.handleSubmit = this.handleSubmit.bind(this);
-  this.onChangeType = this.onChangeType.bind(this);
-  this.resetFields = this.resetFields.bind(this);
-  this.validationSuccess = this.validationSuccess.bind(this);
-  this.onChangeName = this.onChangeName.bind(this);
-  this.onChangeDescription = this.onChangeDescription.bind(this);
-  this.onChangeDuration = this.onChangeDuration.bind(this);
-  this.onChangeWeek = this.onChangeWeek.bind(this);
-  this.onChangeDay = this.onChangeDay.bind(this);
-  this.handleUpdateInputPerm = this.handleUpdateInputPerm.bind(this);
-  this.handleAddNewPerm = this.handleAddNewPerm.bind(this);
-  this.handleSkillDelete = this.handleSkillDelete.bind(this);
+
+    this.handleClose = this.handleClose.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.onChangeType = this.onChangeType.bind(this);
+    this.resetFields = this.resetFields.bind(this);
+    this.validationSuccess = this.validationSuccess.bind(this);
+    this.onChangeName = this.onChangeName.bind(this);
+    this.onChangeDescription = this.onChangeDescription.bind(this);
+    this.onChangeDuration = this.onChangeDuration.bind(this);
+    this.onChangeWeek = this.onChangeWeek.bind(this);
+    this.onChangeDay = this.onChangeDay.bind(this);
+    this.handleUpdateSkill = this.handleUpdateSkill.bind(this);
+    this.handleAddSkill = this.handleAddSkill.bind(this);
+    this.handleSkillDelete = this.handleSkillDelete.bind(this);
+    this.hideSnackbar = this.hideSnackbar.bind(this);
+    this.openSnackbar = this.openSnackbar.bind(this);
 	}
 
   componentWillMount() {
@@ -100,6 +106,20 @@ export default class CourseCard extends React.Component {
       openDialog: this.props.openDialog
     })
   }
+
+  openSnackbar(message) {
+		this.setState({
+			snackbarMessage: message,
+			snackbarOpen: true
+		});
+	}
+
+	hideSnackbar() {
+		this.setState({
+			snackbarMessage: '',
+			snackbarOpen: false
+		});
+	}
 
   handleClose(e, action) {
     if (action == 'ADD') {
@@ -218,27 +238,36 @@ export default class CourseCard extends React.Component {
     }
   }
 
-  handleUpdateInputPerm(searchPerm) {
+  handleUpdateSkill(Skill) {
 		this.setState({
-			searchPerm: searchPerm
+			Skill: Skill
 		})
 	}
 
-	handleAddNewPerm() {
-		let perms = this.state.Skills
-		perms.push(this.state.searchPerm)
-		this.setState({
-			Skills: perms,
-			searchPerm: '',
-      SkillErrorText: ''
-		})
+	handleAddSkill() {
+    let th = this;
+		let skills = this.state.Skills
+    let skill = this.state.Skill;
+    let duplicateFound = skills.some(function(p) {
+      return p.toLowerCase() == skill.toLowerCase()
+    });
+    if(duplicateFound) {
+      th.openSnackbar('Duplicate Skill! Try adding a new skill.');
+    } else {
+      skills.push(skill)
+      th.setState({
+        Skills: skills,
+        Skill: '',
+        SkillErrorText: ''
+      })
+    }
 	}
 
-  handleSkillDelete(perm) {
-    let skill = this.state.Skills.filter(function(control) {
-      return perm != control
+  handleSkillDelete(skill) {
+    let skills = this.state.Skills.filter(function(s) {
+      return skill != s
     })
-    this.setState({Skills: skill})
+    this.setState({Skills: skills})
   }
 
   render() {
@@ -289,6 +318,7 @@ export default class CourseCard extends React.Component {
         )
       }
       return (
+        <div>
         <Dialog bodyStyle={styles.dialog}
           title={title}
           titleStyle={styles.dialogTitle}
@@ -320,9 +350,9 @@ export default class CourseCard extends React.Component {
           <AutoComplete
             floatingLabelText="Add Skills"
             filter={AutoComplete.fuzzyFilter}
-            searchText={this.state.searchPerm}
-            onUpdateInput={this.handleUpdateInputPerm}
-            onNewRequest={this.handleAddNewPerm}
+            searchText={this.state.Skill}
+            onUpdateInput={this.handleUpdateSkill}
+            onNewRequest={this.handleAddSkill}
             dataSource={this.props.course.Skills}
             errorText={th.state.SkillErrorText}
             maxSearchResults={5}
@@ -339,6 +369,13 @@ export default class CourseCard extends React.Component {
             }
             </div>
           </Paper>
-        </Dialog>)
+        </Dialog>
+        <Snackbar
+          open={this.state.snackbarOpen}
+          message={this.state.snackbarMessage}
+          autoHideDuration={4000}
+          onRequestClose={th.hideSnackbar}
+       />
+       </div>)
   }
 }

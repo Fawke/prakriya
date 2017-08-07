@@ -12,40 +12,7 @@ import ContentAdd from 'material-ui/svg-icons/content/add';
 import Dialog from 'material-ui/Dialog';
 import Request from 'superagent';
 import app from '../../styles/app.json';
-
-const items = [
-  <MenuItem key={1} value={"mentor"} primaryText="Mentor" />,
-  <MenuItem key={2} value={"administrator"} primaryText="Administrator" />,
-  <MenuItem key={3} value={"sradministrator"} primaryText="Sr. Administrator" />,
-  <MenuItem key={4} value={"sponsor"} primaryText="Sponsor" />
-];
-
-const styles = {
-    dialog: {
-  		backgroundColor: '#DDDBF1',
-  		borderLeft: '10px solid teal',
-      borderRight: '10px solid teal',
-      borderBottom: '3px solid teal'
-  	},
-  	dialogTitle: {
-  		fontWeight: 'bold',
-  		backgroundColor: 'teal',
-  		color: '#DDDBF1',
-  		textAlign: 'center'
-  	},
-  	actionsContainer: {
-  		backgroundColor: 'teal',
-  		borderTop: '0px',
-  		marginTop: '0px'
-  	},
-  	actionButton: {
-  		backgroundColor: '#DDDBF1',
-  		width: '50%',
-  		color: 'teal',
-  		border: '1px solid teal',
-  		height: '100%'
-  	}
-};
+import dialog from '../../styles/dialog.json';
 
 export default class AddUser extends React.Component {
 
@@ -103,6 +70,9 @@ export default class AddUser extends React.Component {
   handleClose(e, action) {
     if(action == 'CLOSE') {
       this.resetFields()
+      if(this.props.openDialog) {
+      	this.props.closeDialog();
+      }
     } else if(action == 'ADD') {
       if(this.validationSuccess()) {
         this.handleSubmit()
@@ -195,6 +165,9 @@ export default class AddUser extends React.Component {
 		user.password = this.state.password
 		user.role = this.state.role
 		this.resetFields()
+		if(this.props.openDialog) {
+    	this.props.closeDialog();
+    }
 		this.props.handleUpdate(user)
 	}
 
@@ -243,12 +216,12 @@ export default class AddUser extends React.Component {
 			actions = [
         <FlatButton
 	    	 		label='Cancel'
-	    	   	style={styles.actionButton}
+	    	   	style={dialog.actionButton}
 	    			onTouchTap={(e) => this.handleClose(e, 'CLOSE')}
 	    	 	/>,
         <FlatButton
       	 		label='Update User'
-      	   	style={styles.actionButton}
+      	   	style={dialog.actionButton}
       			onTouchTap={(e) => this.handleClose(e, 'EDIT')}
       	 	/>
       ]
@@ -258,31 +231,31 @@ export default class AddUser extends React.Component {
       actions = [
         <FlatButton
 	    	 		label='Cancel'
-	    	   	style={styles.actionButton}
+	    	   	style={dialog.actionButton}
 	    			onTouchTap={(e) => this.handleClose(e, 'CLOSE')}
 	    	 	/>,
         <FlatButton
       	 		label='Add User'
-      	   	style={styles.actionButton}
+      	   	style={dialog.actionButton}
       			onTouchTap={(e) => this.handleClose(e, 'ADD')}
       	 	/>
       ]
 		}
 		return(
 			<div>
-					<FloatingActionButton style={app.fab} mini={true} onTouchTap={this.handleOpen} >
-			      <ContentAdd />
-			    </FloatingActionButton>
+				<FloatingActionButton style={app.fab} mini={true} onTouchTap={this.handleOpen} >
+		      <ContentAdd />
+		    </FloatingActionButton>
 		    <Dialog
-          bodyStyle={styles.dialog}
+          bodyStyle={dialog.body}
           title={dialogTitle}
-          titleStyle={styles.dialogTitle}
+          titleStyle={dialog.title}
           modal={false}
           open={this.state.open}
           autoScrollBodyContent={true}
           onRequestClose={(e) => this.handleClose(e, 'CLOSE')}
           actions={actions}
-          actionsContainerStyle={styles.actionsContainer}
+          actionsContainerStyle={dialog.actionsContainer}
         >
           <div>
 						<TextField
@@ -329,33 +302,33 @@ export default class AddUser extends React.Component {
             />
           </div>
           <div>
-						    	<TextField
-						    		hintText="This will be unique"
-						    		floatingLabelText="Email *"
-                    floatingLabelStyle={app.mandatoryField}
-      			    		value={this.state.email}
-						    		onChange={this.onChangeEmail}
-                    errorText={this.state.emailErrorText}
-                    style={{width: '50%', border: '2px solid white', boxSizing: 'border-box', padding: '5px', top: '-22px'}}
-						    	/>
-						    	<SelectField
-                    errorText={this.state.roleErrorText}
-						        onChange={this.onChangeRole}
-						        floatingLabelText="Select Role *"
-                    floatingLabelStyle={app.mandatoryField}
-      			    		value={this.state.role}
-                    style={{width: '50%', border: '2px solid white', boxSizing: 'border-box', padding: '5px'}}
-        						menuItemStyle={{borderTop: '1px solid teal', borderBottom: '1px solid teal', backgroundColor: '#DDDBF1'}}
-        						listStyle={{backgroundColor: 'teal', borderLeft: '5px solid teal', borderRight: '5px solid teal'}}
-        						selectedMenuItemStyle={{color: 'black', fontWeight: 'bold'}}
-        						maxHeight={600}
-						      >
-						        {
-						        	this.state.roles.map(function(val, key) {
-						        		return <MenuItem key={key} value={val} primaryText={val} />
-						        	})
-						        }
-						      </SelectField>
+				    	<TextField
+				    		hintText="This will be unique"
+				    		floatingLabelText="Email *"
+                floatingLabelStyle={app.mandatoryField}
+  			    		value={this.state.email}
+				    		onChange={this.onChangeEmail}
+                errorText={this.state.emailErrorText}
+                style={{width: '50%', border: '2px solid white', boxSizing: 'border-box', padding: '5px', top: '-22px'}}
+				    	/>
+				    	<SelectField
+                errorText={this.state.roleErrorText}
+				        onChange={this.onChangeRole}
+				        floatingLabelText="Select Role *"
+                floatingLabelStyle={app.mandatoryField}
+  			    		value={this.state.role}
+                style={{width: '50%', border: '2px solid white', boxSizing: 'border-box', padding: '5px'}}
+    						menuItemStyle={{borderTop: '1px solid teal', borderBottom: '1px solid teal', backgroundColor: '#DDDBF1'}}
+    						listStyle={{backgroundColor: 'teal', borderLeft: '5px solid teal', borderRight: '5px solid teal'}}
+    						selectedMenuItemStyle={{color: 'black', fontWeight: 'bold'}}
+    						maxHeight={600}
+				      >
+				        {
+				        	this.state.roles.map(function(val, key) {
+				        		return <MenuItem key={key} value={val} primaryText={val} />
+				        	})
+				        }
+				      </SelectField>
             </div>
         </Dialog>
 			</div>

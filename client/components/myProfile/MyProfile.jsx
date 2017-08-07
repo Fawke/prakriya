@@ -22,6 +22,7 @@ export default class MyProfile extends React.Component {
 		this.getProfilePic = this.getProfilePic.bind(this);
 		this.getCadetProject = this.getCadetProject.bind(this);
 	}
+
 	componentWillMount() {
 		this.getCadet();
 	}
@@ -43,7 +44,7 @@ export default class MyProfile extends React.Component {
 						wave: wave
 		    	})
 					console.log(res.body.data)
-		    	th.getProfilePic(res.body.data.EmployeeID);
+		    	th.getProfilePic(res.body.data.EmailID);
 					th.getCadetProject(res.body.data.EmployeeID);
 		    }
 		  })
@@ -84,12 +85,17 @@ export default class MyProfile extends React.Component {
 		    }
 			});
 	}
+
 	saveProfilePic(picFile) {
 		let th = this;
+		let username = this.state.cadet.EmailID.split("@wipro.com")[0];
+		let user = {
+			username: username
+		};
 		Request
 			.post('/dashboard/saveimage')
 			.set({'Authorization': localStorage.getItem('token')})
-			.field('cadet', JSON.stringify(this.state.cadet))
+			.field('user', JSON.stringify(this.state.user))
 			.attach('file', picFile)
 			.end(function(err, res) {
 				if(err)
@@ -107,24 +113,21 @@ export default class MyProfile extends React.Component {
 		    }
 			})
 	}
-	getProfilePic(eid) {
+
+	getProfilePic(emailID) {
 		let th = this;
+		let username = emailID.split("@wipro.com")[0];
 		Request
-			.get(`/dashboard/getimage?eid=${eid}`)
+			.get(`/dashboard/getimage`)
 			.set({'Authorization': localStorage.getItem('token')})
+			.query({filename: username})
 			.end(function(err, res) {
 				if(err)
 		    	console.log(err);
 		    else {
 		    	if(res.text) {
-		    		let array = new Uint8Array(res.text.length);
-		        for (var i = 0; i < res.text.length; i++){
-		            array[i] = res.text.charCodeAt(i);
-		        }
-		        var blob = new Blob([array], {type: 'image/jpeg'});
-			    	let blobUrl = URL.createObjectURL(blob);
 			    	th.setState({
-			    		imageURL: blobUrl
+			    		imageURL: res.text
 			    	})
 		    	}
 		    }

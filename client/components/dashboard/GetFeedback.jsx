@@ -85,19 +85,19 @@ export default class WaveDetails extends React.Component {
 		doc.text(x+2, y+4, 'Name');
 		doc.rect(x+25, y, 125, 6, 'S');
 		doc.text(x+27, y+4, feedback.cadetName);
-		doc.rect(x+150, y, 25, 6, 'S');
-		doc.text(x+152, y+4, 'Date');
-		doc.rect(x+175, y, 25, 6, 'S');
-		doc.text(x+177, y+4, feedback.submittedOn);
+		doc.rect(x+125, y, 25, 6, 'S');
+		doc.text(x+127, y+4, 'Date');
+		doc.rect(x+150, y, 50, 6, 'S');
+		doc.text(x+152, y+4, feedback.submittedOn);
 
 		doc.rect(x, y+=6, 25, 6, 'S');
 		doc.text(x+2, y+4, 'Organization');
 		doc.rect(x+25, y, 125, 6, 'S');
 		doc.text(x+27, y+4, feedback.organization);
-		doc.rect(x+150, y, 25, 6, 'S');
-		doc.text(x+152, y+4, 'Wave');
-		doc.rect(x+175, y, 25, 6, 'S');
-		doc.text(x+177, y+4, feedback.waveID);
+		doc.rect(x+125, y, 25, 6, 'S');
+		doc.text(x+127, y+4, 'Wave (Course)');
+		doc.rect(x+150, y, 50, 6, 'S');
+		doc.text(x+152, y+4, feedback.waveID);
 
 		let lines = doc.splitTextToSize(CONFIG.FEEDBACK.EXTRA, 200);
 		doc.text(x+2, y+=12, lines);
@@ -172,7 +172,8 @@ export default class WaveDetails extends React.Component {
 				else {
 					console.log('All Waves: ', res.body)
 					let waveIDs = res.body.map(function(wave) {
-						return wave.WaveID
+						console.log(wave.WaveID + ' (' + wave.CourseName + ')')
+						return wave.WaveID + ' (' + wave.CourseName + ')'
 					});
 					th.setState({
 						waveIDs: waveIDs
@@ -202,11 +203,12 @@ export default class WaveDetails extends React.Component {
 
 	getFeedbackFields(waveID) {
 		let th = this;
-		console.log('should get feedback fields for ', waveID);
+		let wave = waveID.split('(')[0].trim();
+		let course = waveID.split('(')[1].split(')')[0];
 		Request
 			.get('/dashboard/courseforwave')
 			.set({'Authorization': localStorage.getItem('token')})
-			.query({waveID: waveID})
+			.query({waveID: wave, course: course})
 			.end(function(err, res){
 				if(err)
 					console.log('Error in fetching feedback fields: ', err)

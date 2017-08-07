@@ -59,6 +59,7 @@ export default class Waves extends React.Component {
 		this.state = {
 			tab: 'Ongoing',
 			currentPage: 1,
+			noCadets: false,
 			cadets: [],
 			courses: [],
 			waves : [],
@@ -93,10 +94,17 @@ export default class Waves extends React.Component {
 				if(err)
 		    	console.log(err);
 		    else {
-		    	th.setState({
-		    		cadets: res.body
-		    	})
-		    	console.log('Cadets for wave', th.state.cadets);
+		    	if(res.body.length == 0) {
+		    		th.setState({
+			    		cadets: [],
+			    		noCadets: true
+			    	})
+		    	} else {
+		    		th.setState({
+			    		cadets: res.body,
+			    		noCadets: false
+			    	})
+		    	}
 		    }
 		  })
 	}
@@ -111,7 +119,6 @@ export default class Waves extends React.Component {
 		    	console.log(err);
 		    else {
 					let filteredWaves = [];
-					console.log('All the waves', res.body)
 					res.body.map(function(wave, key) {
 						let today = Date.now();
 							if(new Date(wave.StartDate) <= today && new Date(wave.EndDate) >= today)
@@ -122,6 +129,7 @@ export default class Waves extends React.Component {
 						filteredWaves: filteredWaves,
 						displayWaves: filteredWaves.slice(0, 3)
 		    	})
+					th.onTabChange('Ongoing');
 		    }
 			})
 	}
@@ -142,17 +150,16 @@ export default class Waves extends React.Component {
 		  })
 	}
 
-	handleUpdate(wave) {
+	handleUpdate(wave, oldCourse) {
 		let th = this;
 		Request
 			.post('/dashboard/updatewave')
 			.set({'Authorization': localStorage.getItem('token')})
-			.send({wave: wave})
+			.send({wave: wave, oldCourse: oldCourse})
 			.end(function(err, res) {
 				if(err)
 		    	console.log(err);
 		    else {
-		    	console.log('Successfully updated a project', res.body)
 		    	th.getWaves();
 					th.setState({
 			      open: true,
@@ -162,8 +169,7 @@ export default class Waves extends React.Component {
 			})
 	}
 
-	handleDelete(wave)
-	{
+	handleDelete(wave) {
 		let th = this;
 		Request
 			.post('/dashboard/deletewave')
@@ -185,8 +191,8 @@ export default class Waves extends React.Component {
 	addWave(wave) {
 		let th = this;
 		let flag = false;
-		this.state.waves.filter(function(existingWave) {
-			if(wave.WaveID === existingWave.WaveID) {
+		this.state.waves.filter(function (existingWave) {
+			if((wave.WaveID === existingWave.WaveID) && ( wave.Course.split('_')[0] === existingWave.CourseName)) {
 				flag = true;
 			}
 		})
@@ -202,7 +208,7 @@ export default class Waves extends React.Component {
 		    else {
 		    	th.setState({
 		    		open: true,
-		    		message: "Wave added successfully with Wave ID: " + res.body.WaveID
+		    		message: "Wave added successfully with Wave ID: " + wave.WaveID
 		    	})
 		    	th.getCadets();
 		    	th.getWaves();
@@ -230,7 +236,6 @@ export default class Waves extends React.Component {
 				displayWaves: filteredWaves.slice(0, 3),
 				pageNumber: 1
 			});
-			console.log('Ongoing: ', filteredWaves);
 		} else if(tab === 'Upcoming') {
 			this.state.waves.map(function(wave, key) {
 				if(new Date(wave.StartDate) > Date.now() || wave.StartDate === null)
@@ -241,7 +246,6 @@ export default class Waves extends React.Component {
 				displayWaves: filteredWaves.slice(0, 3),
 				pageNumber: 1
 			});
-			console.log('Upcoming: ', filteredWaves);
 		} else if(tab === 'Completed') {
 			this.state.waves.map(function(wave, key) {
 				if(new Date(wave.EndDate) < Date.now()  && wave.StartDate !== null)
@@ -252,7 +256,6 @@ export default class Waves extends React.Component {
 				displayWaves: filteredWaves.slice(0, 3),
 				pageNumber: 1
 			});
-			console.log('Completed: ', filteredWaves);
 		}
 		this.setState({
 			tab: tab
@@ -261,8 +264,6 @@ export default class Waves extends React.Component {
 
 	setPage(pageNumber) {
 		let th = this;
-		console.log(th.state);
-		console.log('Page Changed To -- ' + pageNumber);
 		let start = (pageNumber - 1) * 3;
 		let end = start + 3;
 		let sliced = th.state.filteredWaves.slice(start, end);
@@ -270,7 +271,6 @@ export default class Waves extends React.Component {
 			displayWaves: sliced,
 			currentPage: pageNumber
 		});
-		console.log(sliced);
 	}
 
 		handleRequestClose = () => {
@@ -300,6 +300,7 @@ export default class Waves extends React.Component {
 								handleDelete={th.handleDelete}
 								bgColor={backgroundColors[key%4]}
 								bgIcon={backgroundIcons[key%4]}
+								getWaves={th.getWaves}
 							/>
 						)
 					})
@@ -343,6 +344,9 @@ export default class Waves extends React.Component {
 				}
 				{
 					this.props.user.role == "sradmin" &&
+					this.state.courses.length > 0 &&
+					(this.state.cadets.length > 0 ||
+					this.state.noCadets) &&
 					<AddWave
 						cadets={this.state.cadets}
 						courses={this.state.courses}

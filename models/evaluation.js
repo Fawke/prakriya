@@ -12,7 +12,7 @@ var evaluation = new Schema({
   engineeringculture: [Number],
   skills: [Number],
   communication: [Number],
-  overall: Number,
+  overall: String,
   doneWell: String,
   improvement: String,
 	suggestions: String

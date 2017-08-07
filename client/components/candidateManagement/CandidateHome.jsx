@@ -66,36 +66,35 @@ export default class CandidateHome extends React.Component {
 	}
 	componentWillMount() {
 		this.getWave(this.props.candidate.Wave)
-		this.getProfilePic(this.props.candidate.EmployeeID)
+		this.getProfilePic(this.props.candidate.EmailID)
 	}
-	getProfilePic(eid) {
+	getProfilePic(emailID) {
 		let th = this;
+		let username = emailID.split("@wipro.com")[0];
 		Request
-			.get(`/dashboard/getimage?eid=${eid}`)
+			.get(`/dashboard/getimage`)
 			.set({'Authorization': localStorage.getItem('token')})
-			.query({q: eid})
+			.query({filename: username})
 			.end(function(err, res) {
 				if(err)
 		    	console.log(err);
 		    else {
 		    	if(res.text) {
-		    		let array = new Uint8Array(res.text.length);
-		        for (var i = 0; i < res.text.length; i++){
-		            array[i] = res.text.charCodeAt(i);
-		        }
-		        var blob = new Blob([array], {type: 'image/jpeg'});
-			    	let blobUrl = URL.createObjectURL(blob);
 			    	th.setState({
-			    		imageURL: blobUrl
+			    		imageURL: res.text
 			    	})
 		    	}
 		    }
 			})
 	}
 	getWave(waveid) {
+		console.log('here');
+		console.log(waveid);
 		let th = this;
+		let wave = waveid.split('(')[0].trim();
+    let course = waveid.split('(')[1].split(')')[0];
 		Request
-			.get(`/dashboard/wave?waveid=${waveid}`)
+			.get(`/dashboard/wave?waveid=${wave}&course=${course}`)
 			.set({'Authorization': localStorage.getItem('token')})
 			.end(function(err, res) {
 				if(err)
@@ -243,7 +242,7 @@ export default class CandidateHome extends React.Component {
 											</p>
 											</div>
 										}
-										{this.props.candidate.ProjectName != '' &&
+										{(this.props.candidate.ProjectName !== '' && this.props.candidate.ProjectName !== undefined) &&
 										<div>
 										<h4>Project Details</h4>
 										<p style={styles.details}>
@@ -258,7 +257,12 @@ export default class CandidateHome extends React.Component {
 											this.props.role == 'wiproadmin' &&
 											<div>
 												<h4>Billability:</h4>
-												<p style={styles.details}> Status: {this.props.candidate.Billability} </p>
+												<p style={styles.details}><span>Status: {this.props.candidate.Billability.split('since')[0]} </span>
+												{
+													this.props.candidate.Billability.split('since').length > 1 &&
+														<span> since {this.formatDate(this.props.candidate.Billability.split('since')[1])}</span>
+												}
+												</p>
 											</div>
 										}
 										<h4>Manager Details</h4>

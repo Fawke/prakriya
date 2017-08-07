@@ -6,6 +6,7 @@ import SelectField from 'material-ui/SelectField';
 import MenuItem from 'material-ui/MenuItem';
 import TextField from 'material-ui/TextField';
 import FlatButton from 'material-ui/FlatButton';
+import AutoComplete from 'material-ui/AutoComplete';
 import app from '../../styles/app.json';
 import select from '../../styles/select.json';
 import dialog from '../../styles/dialog.json';
@@ -16,6 +17,8 @@ import SaveIcon from 'material-ui/svg-icons/content/save';
 import AddIcon from 'material-ui/svg-icons/content/add-circle-outline';
 import IconButton from 'material-ui/IconButton';
 import CourseColumns from './CourseColumns.jsx';
+import Request from 'superagent';
+import Snackbar from 'material-ui/Snackbar';
 
 const styles = {
   paper: {
@@ -50,7 +53,9 @@ export default class AddCourse extends React.Component {
       SkillsErrorText: '',
       Skills: [],
       SkillName: '',
-      disableSave: true
+      snackbarOpen: false,
+			snackbarMessage: '',
+      snackbarAction: ''
     }
 
     this.handleOpen = this.handleOpen.bind(this);
@@ -66,12 +71,58 @@ export default class AddCourse extends React.Component {
     this.handleSkillChange = this.handleSkillChange.bind(this);
     this.onAddSkill = this.onAddSkill.bind(this);
     this.closeCourseColumns = this.closeCourseColumns.bind(this);
+    this.hideSnackbar = this.hideSnackbar.bind(this);
+    this.openSnackbar = this.openSnackbar.bind(this);
+    this.snackbarAction = this.snackbarAction.bind(this);
   }
 
   componentWillMount() {
     if (this.props.openDialog) {
       this.setState({showDialog: true, Name: this.props.course.Name, Mode: this.props.course.Mode, Duration: this.props.course.Duration.low, Skills: this.props.course.Skills});
     }
+  }
+
+  openSnackbar(message, action) {
+		this.setState({
+			snackbarMessage: message,
+      snackbarAction: action,
+			snackbarOpen: true
+		});
+	}
+
+	hideSnackbar() {
+		this.setState({
+			snackbarMessage: '',
+      snackbarAction: '',
+			snackbarOpen: false
+		});
+	}
+
+  snackbarAction() {
+    let th = this;
+    let skill = this.state.SkillName;
+    let skills = this.state.Skills;
+    let skillSet = this.props.skills;
+    Request
+    .post('/dashboard/createnewskill')
+    .set({'Authorization': localStorage.getItem('token')})
+    .send({skill: skill})
+    .end(function(err, res) {
+      if (err) {
+        console.log(err);
+      } else {
+        skills.push(skill);
+        skillSet.push(skill);
+        th.setState({
+          Skills: skills,
+          SkillSet: skillSet,
+          SkillName: '',
+          SkillsErrorText: ''
+        });
+        th.hideSnackbar();
+        th.openSnackbar(skill + ' is added to the superset.', '');
+      }
+    });
   }
 
   onChangeName(e) {
@@ -87,15 +138,31 @@ export default class AddCourse extends React.Component {
     this.setState({Duration: e.target.value, DurationErrorText: ''});
   }
 
-  handleSkillChange(e) {
-    this.setState({SkillName: e.target.value, disableSave: false, SkillsErrorText: ''});
+  handleSkillChange(value) {
+    this.setState({SkillName: value, SkillsErrorText: ''});
   }
 
   onAddSkill() {
+    let th = this;
     if (this.state.SkillName.trim().length != 0) {
-      let skill = this.state.Skills;
-      skill.push(this.state.SkillName);
-      this.setState({Skills: skill, SkillName: '', disableSave: true, SkillsErrorText: ''});
+      let skillSet = this.props.skills;
+      let skills = this.state.Skills;
+      let skill = this.state.SkillName;
+      let duplicateFound = skills.some(function(s) {
+        return s.toLowerCase() == skill.toLowerCase()
+      });
+      let matchFound = skillSet.some(function(s) {
+        return s.toLowerCase() == skill.toLowerCase()
+      });
+      if(duplicateFound) {
+        th.openSnackbar('Duplicate Skill! Try adding a new skill.', '');
+      } else if (!matchFound){
+        // th.openSnackbar('Please choose a value from the drop down.', '');
+        th.openSnackbar('New Skill! Wanna move it to the superset?', 'YES');
+      } else {
+        skills.push(skill);
+        th.setState({Skills: skills, SkillName: '', SkillsErrorText: ''});
+      }
     }
   }
 
@@ -132,7 +199,7 @@ export default class AddCourse extends React.Component {
     let skill = this.state.Skills.filter(function(control) {
       return perm != control
     })
-    this.setState({Skills: skill, disableSave: false})
+    this.setState({Skills: skill})
   }
 
   resetFields() {
@@ -276,10 +343,17 @@ export default class AddCourse extends React.Component {
             </div>
             <div>
               <div style={dialog.box100}>
-                <TextField hintText="Skills" floatingLabelText="Skills *" floatingLabelStyle={app.mandatoryField} value={this.state.SkillName} onChange={this.handleSkillChange} errorText={this.state.SkillsErrorText}/>
-                <IconButton tooltip="Add Skill" onClick={this.onAddSkill} disabled={this.state.disableSave}>
-                  <AddIcon/>
-                </IconButton>
+                <AutoComplete
+                  floatingLabelText="Add Skills *"
+                  floatingLabelStyle={app.mandatoryField}
+                  filter={AutoComplete.fuzzyFilter}
+                  searchText={th.state.SkillName}
+                  onUpdateInput={th.handleSkillChange}
+                  onNewRequest={th.onAddSkill}
+                  dataSource={th.props.skills}
+                  errorText={th.state.SkillsErrorText}
+                  maxSearchResults={5}
+                />
                 <Paper style={styles.paper} zDepth={1}>
                   <div style={styles.wrapper}>
                     {
@@ -301,6 +375,14 @@ export default class AddCourse extends React.Component {
           onClose={this.closeCourseColumns}
           onConfirmCourseAddition={this.handleAdd}
           />
+          <Snackbar
+  					open={th.state.snackbarOpen}
+  					message={th.state.snackbarMessage}
+  					autoHideDuration={4000}
+  					onRequestClose={th.hideSnackbar}
+            action={th.state.snackbarAction}
+            onActionTouchTap={th.snackbarAction}
+  			 />
         </div>
       )
     }

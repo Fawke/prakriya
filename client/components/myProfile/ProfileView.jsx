@@ -17,6 +17,7 @@ import SaveIcon from 'material-ui/svg-icons/content/save';
 import Dropzone from 'react-dropzone';
 import Moment from 'moment';
 import DropDownMenu from 'material-ui/DropDownMenu';
+import DatePicker from 'material-ui/DatePicker';
 
 const styles = {
 	container: {
@@ -81,7 +82,9 @@ export default class ProfileView extends React.Component {
 			email: '',
 			contact: '',
 			Billability: '',
-			Billing: ['Billable', 'Non-billable(Internal-Project)', 'Non-billable(Customer-Project)', 'Support' , 'Free']
+			Billing: ['Billable', 'Non-billable(Internal-Project)', 'Non-billable(Customer-Project)', 'Support' , 'Free'],
+			Date: '',
+			DateErrorText: ''
 		}
 		this.openAssetDialog = this.openAssetDialog.bind(this);
 		this.closeAssetDialog = this.closeAssetDialog.bind(this);
@@ -95,9 +98,15 @@ export default class ProfileView extends React.Component {
 		this.handlePicSave = this.handlePicSave.bind(this);
 		this.formatDate = this.formatDate.bind(this);
 		this.changeBillability = this.changeBillability.bind(this);
+		this.handleDateChange = this.handleDateChange.bind(this);
 	}
 	componentWillMount() {
 		let picPreview = this.state.defaultProfilePic;
+		let Billability = this.props.cadet.Billability.split('since');
+		let date = null;
+		if(Billability.length > 1) {
+			date = new Date(Billability[1]);
+		}
 		this.setState({
 			cadet: this.props.cadet,
 			assetID: this.props.cadet.AssetID,
@@ -107,7 +116,8 @@ export default class ProfileView extends React.Component {
 			projectDesc: this.props.cadet.ProjectDescription,
 			projectSkills: this.props.cadet.ProjectSkills,
   		picPreview: this.state.defaultProfilePic,
-			Billability: this.props.cadet.Billability
+			Billability: Billability[0],
+			Date: date
   	})
 	}
 	componentWillUpdate(nextProps, nextState) {
@@ -143,11 +153,10 @@ export default class ProfileView extends React.Component {
 	changeBillability(event, index, value) {
 		let Billability = value;
 		this.setState({
-			Billability: Billability
+			Billability: Billability,
+			Date: '',
+			DateErrorText: 'Date must be specified'
 		})
-		let cadet = this.state.cadet;
-		cadet.Billability = value;
-		this.props.handleUpdate(cadet);
 	}
 
 	openAssetDialog() {
@@ -198,6 +207,16 @@ export default class ProfileView extends React.Component {
 	formatDate(date) {
 		return Moment(date).format("MMM Do YYYY");
 	}
+	handleDateChange(event, date) {
+    this.setState({
+			Date: date,
+			DateErrorText: ''
+		})
+		let cadet = this.state.cadet;
+		cadet.Billability = this.state.Billability + 'since' + date;
+		console.log(cadet.Billability)
+		this.props.handleUpdate(cadet);
+  }
 
 	render() {
 		let th = this;
@@ -297,6 +316,11 @@ export default class ProfileView extends React.Component {
 										})
 									}
 				        </DropDownMenu>
+						</span>
+						<br/>
+						<span>
+							<b>{this.state.Billability} since </b>
+							<DatePicker hintText="Billability Date" floatingLabelText='Date' errorText={this.state.DateErrorText} value={this.state.Date} onChange={this.handleDateChange}/>
 						</span>
 
 							<h4>Experience</h4>

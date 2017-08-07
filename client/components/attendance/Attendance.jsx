@@ -71,7 +71,8 @@ export default class Attendance extends React.Component {
       CadetEmail: '',
       future: false,
       admin: [],
-      email: ''
+      email: '',
+      Course: []
     }
     this.handleSelect = this.handleSelect.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -170,7 +171,9 @@ export default class Attendance extends React.Component {
     let th = this;
     let candidateName = [];
     let candidateID = [];
-    Request.get('/dashboard/wavespecificcandidates?waveID=' + waveId).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveId.split('(')[0].trim();
+    let course = waveId.split('(')[1].split(')')[0];
+    Request.get('/dashboard/wavespecificcandidates?waveID=' + wave + '&course=' + course).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       let cadetsEmail = res.body.data.map(function(cadet) {
         return cadet.EmailID;
       })
@@ -357,7 +360,16 @@ export default class Attendance extends React.Component {
   getWaveId() {
     let th = this
     Request.get('/dashboard/waveids').set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
-      th.setState({WaveIds: res.body.waveids})
+      let wave = [];
+      let course = [];
+      res.body.waveids.map(function (waveDetails) {
+        wave.push(waveDetails.waveID);
+        course.push(waveDetails.course);
+      })
+      th.setState({
+        WaveIds: wave,
+        Course: course
+      })
     })
   }
 
@@ -688,8 +700,8 @@ export default class Attendance extends React.Component {
             <Tab label="Update Attendance" value={2}>
               <DatePicker hintText="Date to be updated" floatingLabelText='Date' errorText={this.state.StartDateErrorText} value={this.state.Date} onChange={this.handleDateChange}/>
               <SelectField onChange={th.onWaveIdChange} floatingLabelText="Select WaveID" value={th.state.WaveId}>
-                {th.state.WaveIds.map(function(val, key) {
-                  return <MenuItem key={key} value={val} primaryText={val}/>
+                {th.state.WaveIds.map(function (val, key) {
+                  return <MenuItem key={key} value={val + ' (' + th.state.Course[key] + ')'} primaryText={val + ' (' + th.state.Course[key] + ')'}/>
                 })
 }
               </SelectField>

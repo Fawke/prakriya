@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const UserModel = require('../../models/users.js');
 const RoleModel = require('../../models/roles.js');
 const AccessControlModel = require('../../models/accesscontrols.js');
+let CONFIG = require('../../config');
 const logger = require('./../../applogger');
 
 let getUsers = function (successCB, errorCB) {
@@ -13,10 +15,17 @@ let getUsers = function (successCB, errorCB) {
 };
 
 let addUser = function (userObj, successCB, errorCB) {
+
+	const cipher = crypto.createCipher(CONFIG.CRYPTO.ALGORITHM, CONFIG.CRYPTO.PASSWORD);
+  let encrypted = cipher.update(userObj.password, 'utf8', 'hex');
+  encrypted = cipher.final('hex');
+
+  userObj.password = encrypted;
 	userObj.actions = ['login'];
 	let saveUser = new UserModel(userObj);
 	saveUser.save(userObj, function (err, result) {
 		if(err) {
+			console.log(err);
 			errorCB(err);
 		}
 		successCB(result);

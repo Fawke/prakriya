@@ -22,7 +22,8 @@ export default class Attendance extends React.Component {
       cadetsOfWave: [],
       cadetsEmail: [],
       Cadet: {},
-      CadetName: ''
+      CadetName: '',
+      Course: []
     }
     this.waveDetails = this.waveDetails.bind(this);
     this.onWaveIdChange = this.onWaveIdChange.bind(this);
@@ -42,7 +43,16 @@ export default class Attendance extends React.Component {
   getWaveId() {
     let th = this
     Request.get('/dashboard/waveids').set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
-      th.setState({WaveIds: res.body.waveids})
+      let wave = [];
+      let course = [];
+      res.body.waveids.map(function (waveDetails) {
+        wave.push(waveDetails.waveID);
+        course.push(waveDetails.course);
+      })
+      th.setState({
+        WaveIds: wave,
+        Course: course
+      })
     })
   }
 
@@ -59,21 +69,24 @@ export default class Attendance extends React.Component {
     value = value.split('(');
     value = value[1].split(')');
     let cadet = th.state.cadetsOfWave.filter(function(cadet , key) {
-      if(cadet.email == value[0])
+      if(cadet.email == value[0].trim())
       {
         index = key
       }
-      return cadet.email == value[0]
+      return cadet.email == value[0].trim()
     })
+    console.log(cadet);
     this.setState({
       Cadet: cadet,
       CadetName: cadetName
     })
   }
 
-  waveDetails(waveid) {
+  waveDetails(waveID) {
     let th = this;
-    Request.get(`/dashboard/wave?waveid=${waveid}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveID.split('(')[0].trim();
+    let course = waveID.split('(')[1].split(')')[0];
+    Request.get(`/dashboard/wave?waveid=${wave}&course=${course}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       th.setState({waveObject: res.body})
     })
   }
@@ -82,14 +95,16 @@ export default class Attendance extends React.Component {
     let th = this;
     let candidateName = [];
     let candidateID = [];
-    Request.get('/dashboard/wavespecificcandidates?waveID=' + waveId).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveId.split('(')[0].trim();
+    let course = waveId.split('(')[1].split(')')[0];
+    Request.get('/dashboard/wavespecificcandidates?waveID=' + wave + '&course=' + course).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       let cadetsEmail = res.body.data.map(function(cadet) {
         return cadet.EmailID;
       })
-      th.setState({
-        cadetsEmail: cadetsEmail
-      })
-      th.getWaveCandidates(cadetsEmail)
+    th.setState({
+      cadetsEmail: cadetsEmail
+    })
+    th.getWaveCandidates(cadetsEmail)
     })
   }
 
@@ -195,7 +210,7 @@ export default class Attendance extends React.Component {
       <div>
         <SelectField onChange={th.onWaveIdChange} floatingLabelText="Select WaveID" value={th.state.WaveId}>
           {th.state.WaveIds.map(function(val, key) {
-            return <MenuItem key={key} value={val} primaryText={val}/>
+            return <MenuItem key={key} value={val + ' (' + th.state.Course[key] + ')'} primaryText={val + ' (' + th.state.Course[key] + ')'}/>
           })
 }
         </SelectField>

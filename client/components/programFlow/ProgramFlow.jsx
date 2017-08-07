@@ -83,13 +83,24 @@ export default class Wave extends React.Component {
   getWaveIDs() {
     let th = this
     Request.get('/dashboard/waveids').set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
-      th.setState({waves: res.body.waveids})
+      let wave = [];
+      let course = [];
+      res.body.waveids.map(function (waveDetails) {
+        wave.push(waveDetails.waveID);
+        course.push(waveDetails.course);
+      })
+      th.setState({
+        waves: wave,
+        Course: course
+      })
     })
   }
 
-  getWave(waveID) {
+  getWave(waveId) {
     let th = this
-    Request.get(`/dashboard/waveobject/${waveID}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveId.split('(')[0].trim();
+    let course = waveId.split('(')[1].split(')')[0];
+    Request.get(`/dashboard/waveobject/${wave}/${course}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       th.setState({waveObj: res.body.waveObject, setState: false})
       console.log(th.state.waveObj, "waveobj")
     })
@@ -98,7 +109,9 @@ export default class Wave extends React.Component {
   waveUpdate(waveObj) {
     console.log(this.state.waveString, "waveString")
     let th = this
-    Request.post('/dashboard/updatesession').set({'Authorization': localStorage.getItem('token')}).send({'wave': waveObj, 'waveString': th.state.waveString}).end(function(err, res) {
+    let wave = this.state.waveString.split('(')[0].trim();
+    let course = this.state.waveString.split('(')[1].split(')')[0];
+    Request.post('/dashboard/updatesession').set({'Authorization': localStorage.getItem('token')}).send({wave: waveObj, waveString: wave, course: course}).end(function(err, res) {
       console.log('Wave Updated', waveObj)
       console.log("wave string", th.state.waveString)
     })
@@ -106,11 +119,13 @@ export default class Wave extends React.Component {
   handleDelete(waveObj)
   {
     let th = this;
-    Request.post('/dashboard/deleteSession').set({'Authorization': localStorage.getItem('token')}).send({'wave': waveObj, 'waveString': th.state.waveString}).end(function(err, res) {
+    let wave = this.state.waveString.split('(')[0].trim();
+    let course = this.state.waveString.split('(')[1].split(')')[0];
+    Request.post('/dashboard/deleteSession').set({'Authorization': localStorage.getItem('token')}).send({wave: waveObj, waveString: wave, course: course}).end(function(err, res) {
       if (err)
         console.log(err);
       else {
-        console.log('Successfully deleted a session for this wave')
+        th.getWave(th.state.waveString);
       }
     })
   }
@@ -130,7 +145,7 @@ export default class Wave extends React.Component {
 
               <SelectField onChange={th.onWaveChange} floatingLabelText="Select Wave" value={th.state.waveString}>
                 {th.state.waves.map(function(val, key) {
-                  return <MenuItem key={key} value={val} primaryText={val}/>
+                  return <MenuItem key={key} value={val + ' (' + th.state.Course[key] + ')'} primaryText={val + ' (' + th.state.Course[key] + ')'}/>
                 })
         }
               </SelectField>

@@ -1,10 +1,18 @@
 module.exports = {
   'heading': {
-    'textAlign': 'center'
+    'textAlign': 'center',
+    'color': '#eee'
   },
   'fab': {
 		'position':'fixed',
 		'bottom': '20px',
+		'right': '15px',
+		'zIndex': 1,
+    'border': '2px solid teal'
+	},
+  'fab2': {
+		'position':'fixed',
+		'bottom': '80px',
 		'right': '15px',
 		'zIndex': 1,
     'border': '2px solid teal'

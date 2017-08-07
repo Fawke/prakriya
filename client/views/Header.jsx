@@ -16,10 +16,11 @@ import CancelIcon from 'material-ui/svg-icons/navigation/cancel';
 import ChangePasswordIcon from 'material-ui/svg-icons/action/lock';
 import ActionAccountCircle from 'material-ui/svg-icons/action/account-circle';
 import ChangePassword from '../components/changePassword/index.jsx';
+import UpdateProfilePic from '../components/updateProfilePic/index.jsx';
 import {List, ListItem} from 'material-ui/List';
 import {Link} from 'react-router';
 import Request from 'superagent';
-
+import ProfilePicIcon from 'material-ui/svg-icons/image/portrait';
 
 const styles = {
   title: {
@@ -37,8 +38,9 @@ const styles = {
     width: '100%',
 	},
   userMenu: {
-    backgroundColor: 'rgba(0, 188, 212, 0.10)',
-    width: '100%'
+    backgroundColor: '#C6D8D3',
+    width: '100%',
+    fontWeight: 'bold'
   },
   badge: {
     width: '20px',
@@ -67,7 +69,8 @@ export default class Header extends React.Component {
 	constructor(props) {
 		super(props)
 		this.state = {
-      openDialog: false,
+      openChangePasswordDialog: false,
+      openProfilePicDialog: false,
 			openDrawer: false,
 			actionMenu: '',
 			actions: [],
@@ -79,20 +82,23 @@ export default class Header extends React.Component {
       notifications: [],
       imageURL: "../assets/images/avt-default.jpg"
 		}
+
 		this.logout = this.logout.bind(this);
-    this.toggleChangePasswordDialog = this.toggleChangePasswordDialog.bind(this)
+    this.toggleDialog = this.toggleDialog.bind(this)
 		this.getActions = this.getActions.bind(this);
+    this.getProfilePic = this.getProfilePic.bind(this);
 		this.handleDrawerToggle = this.handleDrawerToggle.bind(this);
 		this.handleDrawerClose = this.handleDrawerClose.bind(this);
 		this.openDashboard = this.openDashboard.bind(this);
-		this.handleClose = this.handleClose.bind(this);
     this.getNotifications = this.getNotifications.bind(this);
     this.dropNotification = this.dropNotification.bind(this);
+    this.updateProfilePic = this.updateProfilePic.bind(this);
 	}
 
   componentWillMount() {
 		if(localStorage.getItem('token')) {
 			this.getActions()
+      this.getProfilePic(this.props.user.username)
       this.getNotifications(this.props.user.username)
 		}
     let th = this
@@ -107,6 +113,31 @@ export default class Header extends React.Component {
       }
     })
 	}
+
+  getProfilePic(username) {
+  	let th = this;
+  	Request
+  		.get(`/dashboard/getimage`)
+  		.set({'Authorization': localStorage.getItem('token')})
+      .query({filename: username})
+  		.end(function(err, res) {
+  			if(err)
+  	    	console.log(err);
+  	    else {
+  	    	if(res.text) {
+  		    	th.setState({
+  		    		imageURL: res.text
+  		    	})
+  	    	}
+  	    }
+  		})
+  }
+
+  updateProfilePic(newImageURL) {
+    this.setState({
+      imageURL: newImageURL
+    })
+  }
 
   getNotifications(username) {
     let th = this
@@ -195,17 +226,17 @@ export default class Header extends React.Component {
 		this.context.router.push('/app')
 	}
 
-	handleClose() {
-		this.setState({
-			openDialog: !this.state.openDialog
-		})
-	}
-
-  toggleChangePasswordDialog() {
-    console.log('toggle changePassword: ', this.state.openDialog)
-    this.setState({
-      openDialog: !this.state.openDialog
-    })
+  toggleDialog(dialogType) {
+    let th = this;
+    if(dialogType == 'ChangePassword') {
+      th.setState({
+        openChangePasswordDialog: !this.state.openChangePasswordDialog
+      });
+    } else if(dialogType == 'ProfilePic') {
+      th.setState({
+        openProfilePicDialog: !this.state.openProfilePicDialog
+      });
+    }
   }
 
 	render() {
@@ -217,6 +248,7 @@ export default class Header extends React.Component {
 		      width={250}
 		      open={this.state.openDrawer}
 		      onRequestChange={(openDrawer) => this.setState({openDrawer})}
+          containerStyle={{backgroundColor: '#292A2C'}}
           >
           <Card>
              <CardMedia
@@ -228,7 +260,7 @@ export default class Header extends React.Component {
 					      />
               }
              >
-                 <img src="./assets/images/drawer_top.jpg" style={{width: '100%'}}/>
+                 <img src={this.state.imageURL} style={{width: '100%', border: '2px solid black', height: 250}}/>
              </CardMedia>
           </Card>
 		      {
@@ -238,6 +270,7 @@ export default class Header extends React.Component {
 		      			<Link to={th.state.routes[key]} key={key} style={{textDecoration: 'none'}} >
 					      	<MenuItem
                     primaryText={action}
+                    style={{color: 'white'}}
                     onTouchTap={th.handleDrawerClose}
                    />
 				      	</Link>
@@ -258,7 +291,7 @@ export default class Header extends React.Component {
               >
     	        	<IconMenu
                   menuStyle={styles.userMenu}
-    					    iconButtonElement={<IconButton><NotificationsIcon /></IconButton>}
+    					    iconButtonElement={<IconButton><NotificationsIcon color={'rgba(255, 255, 255, 0.87)'}/></IconButton>}
     					    anchorOrigin={{horizontal: 'left', vertical: 'bottom'}}
     					  >
                   {
@@ -268,7 +301,7 @@ export default class Header extends React.Component {
                         <ListItem
                           primaryText='No new notifications found'
                           key='-1'
-                          style={{textAlign: 'center'}}
+                          style={{textAlign: 'center', color: '#757575'}}
                         /> :
                         th.state.notifications.map(function(message, index) {
                           return (
@@ -291,13 +324,14 @@ export default class Header extends React.Component {
   	        	<IconMenu
                 menuStyle={styles.userMenu}
   					    iconButtonElement={
-  					      <IconButton><ActionAccountCircle /></IconButton>
+  					      <IconButton><ActionAccountCircle  color={'rgba(255, 255, 255, 0.87)'}/></IconButton>
   					    }
   					    anchorOrigin={{horizontal: 'middle', vertical: 'bottom'}}
   					  >
                 <List>
-    					    <ListItem primaryText="Log Out" onClick={th.logout} leftIcon={<LogoutIcon />}/>
-                  <ListItem primaryText="Change Password" onClick={th.toggleChangePasswordDialog}  leftIcon={<ChangePasswordIcon />}/>
+                  <ListItem primaryText="Update Profile Pic" onClick={()=>th.toggleDialog('ProfilePic')}  leftIcon={<ProfilePicIcon />} style={{color: '#757575'}}/>
+                  <ListItem primaryText="Change Password" onClick={()=>th.toggleDialog('ChangePassword')}  leftIcon={<ChangePasswordIcon />} style={{color: '#757575'}}/>
+                  <ListItem primaryText="Log Out" onClick={th.logout} leftIcon={<LogoutIcon />} style={{color: '#757575'}}/>
                 </List>
   					  </IconMenu>
             </div>
@@ -306,10 +340,22 @@ export default class Header extends React.Component {
 
         <Dialog
           contentStyle={styles.customContent}
-          open={th.state.openDialog}
-          onRequestClose={th.toggleChangePasswordDialog}
+          open={th.state.openChangePasswordDialog}
+          onRequestClose={()=>th.toggleDialog('ChangePassword')}
         >
-          <ChangePassword username={this.props.user.username} handleClose={th.handleClose}/>
+          <ChangePassword username={this.props.user.username} handleClose={()=>th.toggleDialog('ChangePassword')}/>
+        </Dialog>
+
+        <Dialog
+          contentStyle={styles.customContent}
+          open={th.state.openProfilePicDialog}
+          onRequestClose={()=>th.toggleDialog('ProfilePic')}
+        >
+          <UpdateProfilePic
+            username={this.props.user.username}
+            currentImage={this.state.imageURL}
+            handleClose={()=>th.toggleDialog('ProfilePic')}
+            handleUpdate={th.updateProfilePic}/>
         </Dialog>
       </div>
 		)

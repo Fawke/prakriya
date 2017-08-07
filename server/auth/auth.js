@@ -46,7 +46,7 @@ module.exports = function () {
         }
       };
     },
-    controlledBy: function (allowedControls) {
+    accessedBy: function (allowedControls) {
       return function (req, res, next) {
         roleModel.findOne({name: req.user.role}, function (err, role) {
           let allowed = false;

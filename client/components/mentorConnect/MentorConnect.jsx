@@ -8,11 +8,9 @@ import Snackbar from 'material-ui/Snackbar';
 import Slider from 'material-ui/Slider';
 import FileDrop from './FileDrop.jsx';
 import CadetItem from './CadetItem.jsx';
+import app from '../../styles/app.json';
 
 const styles = {
-	heading: {
-		textAlign: 'center'
-	},
 	rowHeaders: {
 		height: 50,
 		fontWeight: 'bold',
@@ -146,6 +144,10 @@ export default class MentorConnect extends React.Component {
 				cadet.Selected = 'Yes'
 				saveCadets.push(cadet)
 			}
+			else {
+				cadet.Selected = 'No'
+				saveCadets.push(cadet)
+			}
 		})
 		this.saveAllRemarks(saveCadets);
 	}
@@ -177,7 +179,7 @@ export default class MentorConnect extends React.Component {
 		})
 		return(
 			<div>
-				<h1 style={styles.heading}>Mentor Connect</h1>
+				<h1 style={app.heading}>Mentor Connect</h1>
 				<Grid>
 					<Row style={{textAlign: 'center'}}>
 						<Col md={5}>

@@ -41,22 +41,24 @@ export default class EvaluationForms extends React.Component {
 			wave: '',
 			cadetID: '',
 			cadetName: '',
-			attitude: 1,
-			punctuality: 1,
+			attitude: 0,
+			punctuality: 0,
 			programming: [],
 			codequality: [],
 			testability: [],
 			engineeringculture: [],
 			skills: [],
 			communication: [],
-			overall: 1,
+			overall: '',
 			doneWell: '',
 			improvement: '',
 			suggestions: '',
 			open: false,
-			disableSave: true
+			disableSave: true,
+			oldEvaluation: false
 		}
 		this.getCadets = this.getCadets.bind(this);
+		this.handleOverallRatingChange = this.handleOverallRatingChange.bind(this);
 		this.handleWaveChange = this.handleWaveChange.bind(this);
 		this.handleCandidateChange = this.handleCandidateChange.bind(this);
 		this.handleChange = this.handleChange.bind(this);
@@ -71,13 +73,6 @@ export default class EvaluationForms extends React.Component {
 
 	componentWillMount() {
 		this.getCadets();
-		this.setState({
-			programming: [0, 0, 0, 0, 0],
-			codequality: [0, 0, 0, 0],
-			testability: [0, 0, 0],
-			engineeringculture: [0, 0, 0, 0, 0],
-			communication: [0, 0, 0]
-		});
 	}
 
 	componentWillUpdate(nextProps, nextState) {
@@ -142,12 +137,61 @@ export default class EvaluationForms extends React.Component {
 		})
 	};
 
+	handleOverallRatingChange(event, key, val) {
+		this.setState({
+			overall: val
+		})
+	};
+
 	handleCandidateChange(event, key, val) {
 		let newVal = val.split('-');
-		this.getEvaluationFields(newVal[0]);
-		this.setState({
-			cadetID: newVal[0],
-			cadetName: newVal[1]
+		let th= this;
+		Request.get(`/dashboard/getevaluation?emailID=${newVal[1]}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+      if (err)
+        console.log(err);
+      else {
+				console.log('Feedback saved successfully', res.body);
+				if(res.body.length > 0)
+				{
+					th.setState({
+						cadetID: res.body[0].cadetID,
+						cadetName: res.body[0].cadetName,
+						attitude: res.body[0].attitude,
+						punctuality: res.body[0].punctuality,
+						programming: res.body[0].programming,
+						codequality: res.body[0].codequality,
+						testability: res.body[0].testability,
+						engineeringculture: res.body[0].engineeringculture,
+						skills: res.body[0].skills,
+						communication: res.body[0].communication,
+						overall: res.body[0].overall,
+						doneWell: res.body[0].doneWell,
+						improvement: res.body[0].improvement,
+						suggestions: res.body[0].suggestions,
+						oldEvaluation: true,
+						disableSave: true
+					})
+				}
+				else {
+					th.getEvaluationFields(newVal[1]);
+					th.setState({
+						cadetName: newVal[0],
+						cadetID: newVal[1],
+						programming: [0, 0, 0, 0, 0],
+						codequality: [0, 0, 0, 0],
+						testability: [0, 0, 0],
+						engineeringculture: [0, 0, 0, 0, 0],
+						communication: [0, 0, 0],
+						attitude: 0,
+						punctuality: 0,
+						overall: '',
+						doneWell: '',
+						improvement: '',
+						suggestions: '',
+						oldEvaluation: false
+					})
+				}
+			}
 		})
 	};
 
@@ -232,7 +276,7 @@ export default class EvaluationForms extends React.Component {
 		let skillNames = EVALUATION[4].options;
 		let skillRatings = this.state.skills;
 		let obj = {};
-		obj.employeeID = this.state.cadetID;
+		obj.emailID = this.state.cadetID;
 		obj.waveID = this.state.wave;
 		obj.skills = skillNames;
 		obj.ratings = skillRatings;
@@ -275,7 +319,7 @@ export default class EvaluationForms extends React.Component {
 						</Col>
 						<Col md={4}>
 							<SelectField
-			          value={this.state.cadetID+'-'+this.state.cadetName}
+			          value={this.state.cadetName+'-'+this.state.cadetID}
 			          onChange={this.handleCandidateChange}
 			          floatingLabelText="Select Candidate"
 			          fullWidth={true}
@@ -285,13 +329,22 @@ export default class EvaluationForms extends React.Component {
 			        	this.state.cadets.map(function (cadet, index) {
 			        		return (
 			        			cadet.Wave == th.state.wave &&
-			        			<MenuItem key={index} value={cadet.EmployeeID+'-'+cadet.EmployeeName} primaryText={cadet.EmployeeName} />
+			        			<MenuItem
+			        				key={index}
+			        				value={cadet.EmployeeName+'-'+cadet.EmailID}
+			        				primaryText={cadet.EmployeeName+'-'+cadet.EmailID}
+			        			/>
 			        		)
 			        	})
 			        }
 			        </SelectField>
 						</Col>
 					</Row>
+					<Row><Col md={10}>
+						{
+							th.state.oldEvaluation && <p style={{color: '#00BCD4', marginLeft: '50%'}}> You have already evaluated this cadet...</p>
+						}
+					</Col></Row>
 					{
 						th.state.cadetID == '' ?
 						<Row>
@@ -362,18 +415,25 @@ export default class EvaluationForms extends React.Component {
 								)
 							})
 						}
+						<br />
 						<Row>
 							<Col md={6} mdOffset={2} style={styles.single}>
 								OVERALL RATING ACROSS THE PROGRAM
 							</Col>
 							<Col md={2}>
-								<StarRating
-									color1={'#ddd'}
-									half={false}
-									size={30}
-									value={this.state.overall}
-									onChange={(newVal) => th.handleChange(newVal, 'overall')}
-								/>
+							<SelectField
+								value={this.state.overall}
+								onChange={this.handleOverallRatingChange}
+								fullWidth={true}
+								disabled= {this.state.oldEvaluation}
+							>
+								{
+									['Top Gun', 'Good', 'Above Average', 'Average']
+									.map(function (value, index) {
+										return <MenuItem key={index} value={value} primaryText={value} />
+									})
+								}
+							</SelectField>
 							</Col>
 						</Row>
 
@@ -387,6 +447,7 @@ export default class EvaluationForms extends React.Component {
 						      fullWidth={true}
 						      value={this.state.doneWell}
 						      onChange={this.handleDoneWellChange}
+									disabled= {this.state.oldEvaluation}
 						    />
 							</Col>
 						</Row>
@@ -401,6 +462,7 @@ export default class EvaluationForms extends React.Component {
 						      fullWidth={true}
 						      value={this.state.improvement}
 						      onChange={this.handleAreasOfImprovementChange}
+									disabled= {this.state.oldEvaluation}
 						    />
 						  </Col>
 						</Row>
@@ -414,6 +476,7 @@ export default class EvaluationForms extends React.Component {
 									fullWidth={true}
 									value={this.state.suggestions}
 									onChange={this.handleSuggestionsChange}
+									disabled= {this.state.oldEvaluation}
 								/>
 							</Col>
 						</Row>
@@ -424,7 +487,7 @@ export default class EvaluationForms extends React.Component {
 									label="Submit"
 									primary={true}
 									onClick={this.handleSubmit}
-									disabled={this.state.disableSave}
+									disabled={this.state.disableSave || this.state.oldEvaluation}
 									style={{width: '100%'}}
 								/>
 								<Snackbar

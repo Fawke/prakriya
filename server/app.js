@@ -34,6 +34,8 @@ module.exports = function () {
 
   app = service.setupRestRoutes(app);
 
+  service.addingNeo4jConstraints();
+
   service.setupMongooseConnections();
 
   return app;

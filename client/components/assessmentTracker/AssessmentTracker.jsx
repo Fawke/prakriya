@@ -28,6 +28,7 @@ export default class AssessmentTracker extends React.Component {
       assessment: '',
       select: false,
       Assignments: [],
+      Course: [],
       implementation: [
         'Understands and implements very well', 'Understands and implements ok', 'Understands but finds it difficult to implement', 'Do not understand and is not able to implement'
       ],
@@ -38,7 +39,7 @@ export default class AssessmentTracker extends React.Component {
         'High', 'Medium', 'Low'
       ],
       cadetsResult: [],
-      update: false
+      update: []
     }
 
     this.getWaveIDs = this.getWaveIDs.bind(this)
@@ -50,6 +51,7 @@ export default class AssessmentTracker extends React.Component {
     this.onCompleteChange = this.onCompleteChange.bind(this);
     this.onLearnChange = this.onLearnChange.bind(this);
     this.save = this.save.bind(this);
+    this.getCadetsOfWave = this.getCadetsOfWave.bind(this);
   }
 
   componentWillMount() {
@@ -61,7 +63,18 @@ export default class AssessmentTracker extends React.Component {
   getWaveIDs() {
     let th = this
     Request.get('/dashboard/waveids').set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
-      th.setState({waves: res.body.waveids})
+      let wave = [];
+      let course = [];
+      res.body.waveids.map(function (waveDetails) {
+        wave.push(waveDetails.waveID);
+        course.push(waveDetails.course);
+      })
+      th.setState({
+        waves: wave,
+        Course: course
+      })
+      console.log(wave);
+      console.log(course);
     })
   }
 
@@ -119,34 +132,35 @@ export default class AssessmentTracker extends React.Component {
       assessmentArray.push(assessment);
     })
     console.log(assessmentArray);
-    if (th.state.update) {
-      Request.post('/dashboard/assessmentdetails').set({'Authorization': localStorage.getItem('token')}).send({assessment: assessmentArray, update: th.state.update}).end(function(err, res) {
-        if (err) {
-          console.log(err);
-        }
-      })
-    } else {
-      Request.post('/dashboard/assessmentdetails').set({'Authorization': localStorage.getItem('token')}).send({assessment: assessmentArray, update: th.state.update}).end(function(err, res) {
+    Request.post('/dashboard/assessmentdetails').set({'Authorization': localStorage.getItem('token')}).send({assessment: assessmentArray, update: th.state.update}).end(function(err, res) {
         if (err) {
           console.log(err);
         } else {
-          th.setState({wave: '', assessment: ''})
+          let update = th.state.update;
+          update.fill(true);
+          th.setState({
+            update: update
+          })
         }
       })
-    }
   }
 
   getWave(waveID) {
     let th = this
-    Request.get(`/dashboard/wave?waveid=${waveID}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveID.split('(')[0].trim();
+    let course = waveID.split('(')[1].split(')')[0];
+    Request.get(`/dashboard/wave?waveid=${wave}&course=${course}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       th.setState({waveCadets: res.body})
+      console.log(res.body);
     })
   }
 
   getAssessmentTrack(waveID) {
     let th = this
     console.log(waveID);
-    Request.get(`/dashboard/assessment?waveid=${waveID}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveID.split('(')[0].trim();
+    let course = waveID.split('(')[1].split(')')[0];
+    Request.get(`/dashboard/assessment?waveid=${wave}&course=${course}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       th.setState({Assignments: res.body.data, select: true})
     })
   }
@@ -155,16 +169,18 @@ export default class AssessmentTracker extends React.Component {
     let th = this;
     let candidateName = [];
     let candidateID = [];
-    Request.get(`/dashboard/assessmentandcandidates/${waveID}/${assessment}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
+    let wave = waveID.split('(')[0].trim();
+    let course = waveID.split('(')[1].split(')')[0];
+    Request.get(`/dashboard/assessmentandcandidates/${wave}/${assessment}/${course}`).set({'Authorization': localStorage.getItem('token')}).end(function(err, res) {
       let cadetsResult = [];
-      let update = false;
+      let update = [];
       res.body.data.map(function(candidate) {
         if (candidate.assignment === null) {
           cadetsResult.push({EmployeeID: candidate.cadet.EmployeeID, AssignmentName: assessment, implement: 'Understands and implements very well', complete: 'Completed with no help', learn: 'High'})
-          update = false;
+          update.push(false);
         } else {
           cadetsResult.push({EmployeeID: candidate.cadet.EmployeeID, AssignmentName: assessment, implement: candidate.assignment.implement, complete: candidate.assignment.complete, learn: candidate.assignment.learn});
-          update = true;
+          update.push(true);
         }
       })
       th.setState({cadetsOfWave: res.body.data, cadetsResult: cadetsResult, update: update})
@@ -185,7 +201,7 @@ export default class AssessmentTracker extends React.Component {
               }}>
                 <SelectField onChange={th.onWaveChange} floatingLabelText="Select Wave" value={th.state.wave}>
                   {th.state.waves.map(function(val, key) {
-                    return <MenuItem key={key} value={val} primaryText={val}/>
+                    return <MenuItem key={key} value={val + ' (' + th.state.Course[key] + ')'} primaryText={val + ' (' + th.state.Course[key] + ')'}/>
                   })
 }
                 </SelectField>
@@ -199,6 +215,7 @@ export default class AssessmentTracker extends React.Component {
             </Col>
           </Row>
         </Grid>
+        <br/>
         <Table width='100%'>
           <TableHeader displaySelectAll={false} adjustForCheckbox={false}>
             <TableHeaderColumn style={{

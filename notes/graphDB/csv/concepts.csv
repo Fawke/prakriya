@@ -1,7 +1,0 @@
-NodeId,Name,NodeType,ParentNodeId,ParentRelation,Description
-Language:1,Javascript,Language, , , 
-Concept:1,React JS,Concept,Language:1,ConceptOf, 
-Concept:2,React Routes,Concept,Concept:1,SubConceptOf, 
-Concept:3,Promise,Concept,Skill:1,RelatedTo, 
-Concept:3,Promise,Concept,Concept:1,SubConceptOf, 
-Skill:1,Async Programming,Skill,Language:1,SkillOf, 

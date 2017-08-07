@@ -31,11 +31,9 @@ injectTapEventPlugin();
 const muiTheme = getMuiTheme(lightBaseTheme);
 muiTheme.baseTheme.palette.primary1Color = '#202D3E';
 muiTheme.appBar.color = '#202D3E';
-muiTheme.appBar.textColor = '#eee';
 muiTheme.textField.floatingLabelColor = '#57e161';
 muiTheme.textField.hintColor = '#57e161';
 muiTheme.textField.textColor = '#57e161';
-muiTheme.svgIcon.color = 'rgba(255, 255, 255, 0.87)';
 
 var user;
 
@@ -63,7 +61,7 @@ let requireAuth = function(nextState, replace, callback) {
 let alreadyLoggedIn = function(nextState, replace, callback) {
 	console.log('Theme', muiTheme)
   const token = localStorage.getItem('token')
-  if(token) 
+  if(token)
   	replace('/app')
   return callback()
 }

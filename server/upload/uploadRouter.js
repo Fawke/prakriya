@@ -9,7 +9,7 @@ let auth = require('../auth')();
 let CONFIG = require('../../config');
 
 // Adding the cadets for the mentor connect
-router.post('/cadets', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res) {
+router.post('/cadets', auth.accessedBy(['BULK_UPLOAD']), function (req, res) {
 	let form = new formidable.IncomingForm();
 	form.parse(req, function (err1, fields, files) {
 		fs.readFile(files.file.path, 'utf8', (err2, data) => {
@@ -39,7 +39,7 @@ router.post('/cadets', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res)
 });
 
 // Adding remarks in bulk
-router.post('/remarks', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res) {
+router.post('/remarks', auth.accessedBy(['BULK_UPLOAD']), function (req, res) {
 	let form = new formidable.IncomingForm();
 	form.parse(req, function (err1, fields, files) {
 		fs.readFile(files.file.path, 'utf8', (err2, data) => {
@@ -78,7 +78,7 @@ router.post('/remarks', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res
 });
 
 // Merging two files
-router.post('/merge', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res) {
+router.post('/merge', auth.accessedBy(['BULK_UPLOAD']), function (req, res) {
 	let form = new formidable.IncomingForm();
 	let file_type = req.query.file;
 	form.parse(req, function (err1, fields, files) {
@@ -115,18 +115,13 @@ router.post('/merge', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res) 
 							else if(file_type == 'Digi-Thon') {
 								// Don't have the Digi-Thon file for the reference
 							}
-							
+
 							src_lines.map(function (line2, index2) {
-								
 								if(index2 > 0 && line2 !== '') {
 									let lineCol2 = line2.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
 									let cadetObj2 = {};
 
-									// logger.debug('Report ID', cadetObj['Employee ID'])
-									// logger.debug('SRC ID', lineCol2[eid_index])
-
 									if(lineCol2[eid_index] == cadetObj['Employee ID']) {
-										
 										src_headers.map(function (head2, key2) {
 											if(lineCol2[key2] !== '') {
 												cadetObj2[head2] = lineCol2[key2];
@@ -154,8 +149,11 @@ router.post('/merge', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res) 
 											cadetObj['Updated Skill'] = cadetObj2['DERIVED_SUITE_NAME'];
 											result.push(cadetObj);
 										}
-										logger.debug('Index', index);
-										logger.debug(report_lines.length);
+										else if(file_type == 'ERD') {
+											cadetObj['Future / Current - Billability'] = cadetObj2['PROJECT'];
+											cadetObj['Future BD'] = cadetObj2['ASSIGN_START'];
+											cadetObj['Project End date'] = cadetObj2['ASSIGN_END'];
+										}
 										if(index == report_lines.length-2) {
 											res.status(200).json(result);
 										}
@@ -172,6 +170,12 @@ router.post('/merge', auth.canAccess(CONFIG.ADMINISTRATOR), function (req, res) 
 				}
 			});
 		});
+
+
+
+
+
+
 
 
 	// 	fs.readFile(files.zcop.path, 'utf8', (err2, zcop_data) => {

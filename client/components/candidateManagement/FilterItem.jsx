@@ -8,19 +8,15 @@ import Slider from 'material-ui/Slider';
 
 const styles = {
 	filterBody: {
-		// border: '1px solid #eeeeee', 
-		// backgroundColor: 'silver', 
-		padding: '5px', 
+		padding: '5px',
 		width: '100%'
 	},
 	autoComplete: {
-		width: '100%', 
-		// border: '2px solid silver', 
+		width: '100%',
 		padding: '3px'
 	},
 	radioButton: {
-		width: '100%', 
-		// border: '2px solid silver', 
+		width: '100%',
 		padding: '3px'
 	}
 }
@@ -39,6 +35,7 @@ export default class FilterItem extends React.Component {
 		this.getSliderValue = this.getSliderValue.bind(this);
 		this.addFilter = this.addFilter.bind(this);
     this.getAccordianValues = this.getAccordianValues.bind(this);
+		this.handleUpdate = this.handleUpdate.bind(this);
   }
 
   toggleAccordion() {
@@ -53,8 +50,8 @@ export default class FilterItem extends React.Component {
 			}
     } else {
       this.setState({
-        accordion: 'none',
-				selectedValue: ''
+				selectedValue: '',
+				accordion: 'none'
       });
     }
   }
@@ -74,9 +71,15 @@ export default class FilterItem extends React.Component {
   	})
   }
 
+	handleUpdate(value) {
+		this.setState({
+			selectedValue: value
+		})
+	}
+
 	addFilter(value) {
 		this.setState({
-			selectedValue: value,
+			selectedValue: '',
 			accordion: 'none'
 		});
 		console.log('Selected Value: ', this.state.selectedValue);
@@ -91,11 +94,12 @@ export default class FilterItem extends React.Component {
 					<div style={{display: this.state.accordion}}>
 						<AutoComplete
 							filter={AutoComplete.fuzzyFilter}
-							dataSource={this.state.values}
-							searchText={this.state.selectedValue}
-							onNewRequest={this.addFilter}
+							dataSource={th.state.values}
+							searchText={th.state.selectedValue}
+							onUpdateInput={th.handleUpdate}
+							onNewRequest={th.addFilter}
 							style={styles.autoComplete}
-							/>
+						/>
 					</div>
 				);
 		} else if(this.props.type == 'CheckBox') {
@@ -143,10 +147,10 @@ export default class FilterItem extends React.Component {
 		} else if(this.props.type == 'Slider') {
 			content = (
 				<div style={{
-					display: this.state.accordion, 
-					width: '100%', 
-					// border: '2px solid silver', 
-					padding: '3px', 
+					display: this.state.accordion,
+					width: '100%',
+					// border: '2px solid silver',
+					padding: '3px',
 					height: '70px'
 				}}>
 					<span style={{padding: '2px'}}>Above: {this.state.selectedValue}</span>
@@ -165,7 +169,11 @@ export default class FilterItem extends React.Component {
         <div style={styles.filterBody}>
 					<div style={{width: '90%', display: 'inline-block'}}>{this.props.title}</div>
 					<div style={{display: 'inline-block'}} onTouchTap={this.toggleAccordion}>
-						{this.state.accordion == 'none' ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+						{
+							this.state.accordion == 'none' ?
+							<ArrowDropDownIcon style={{color: '#000'}}/> :
+							<ArrowDropUpIcon style={{color: '#000'}}/>
+						}
 					</div>
 				</div>
 				{content}

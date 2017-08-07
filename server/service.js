@@ -3,21 +3,24 @@ const path = require('path');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const flash = require('connect-flash');
+const neo4jDriver = require('neo4j-driver').v1;
+const crypto = require('crypto');
 const auth = require('./auth')();
 const CONFIG = require('../config');
 const logger = require('./../applogger');
+const graphConsts = require('./common/graphConstants');
 
-function createApp() {
+let createApp = function() {
   const app = express();
   return app;
 }
 
-function setupStaticRoutes(app) {
+let setupStaticRoutes = function(app) {
   app.use(express.static(path.resolve(__dirname, '../', 'client')));
   return app;
 }
 
-function setupRestRoutes(app) {
+let setupRestRoutes = function(app) {
   //  MOUNT YOUR REST ROUTE HERE
   //  Eg: app.use('/resource', require(path.join(__dirname, './module')));
 
@@ -39,7 +42,7 @@ function setupRestRoutes(app) {
   return app;
 }
 
-function setupMiddlewares(app) {
+let setupMiddlewares = function(app) {
   //  For logging each requests
   app.use(morgan('dev'));
   const bodyParser = require('body-parser');
@@ -77,7 +80,7 @@ function setupMiddlewares(app) {
   return app;
 }
 
-function setupWebpack(app) {
+let setupWebpack = function(app) {
   if (CONFIG.NODE_ENV !== 'production') {
     const webpack = require('webpack');
     const webpackDevMiddleware = require('webpack-dev-middleware');
@@ -95,7 +98,7 @@ function setupWebpack(app) {
   return app;
 }
 
-function setupMongooseConnections() {
+let setupMongooseConnections = function() {
   mongoose.connect(CONFIG.MONGO.mongoURL);
 
   mongoose.connection.on('connected', function () {
@@ -103,24 +106,36 @@ function setupMongooseConnections() {
     const ControlsModel = require('../models/accesscontrols.js');
     const RoleModel = require('../models/roles.js');
     const UserModel = require('../models/users.js');
+
     CONFIG.BASEDATA.ACCESS_CONTROLS.map(function (controlObj) {
       let saveControl = new ControlsModel(controlObj);
       saveControl.save(function (err, control) {
         if(!err) {
-          logger.info('Access Control added', control.name);
+          logger.info('Access Control Added -- ', control.name);
         }
       });
     });
-    let saveRole = new RoleModel(CONFIG.BASEDATA.ADMIN_ROLE);
-    saveRole.save(function (err, role) {
-      if(!err) {
-        logger.info('Role added', role.name);
-      }
+
+    CONFIG.BASEDATA.BASIC_ROLES.map(function(roleObj) {
+      let saveRole = new RoleModel(roleObj);
+      saveRole.save(function (err, role) {
+        if(!err) {
+          logger.info('Role Added --', role.name);
+        }
+      });
     });
-    let saveUser = new UserModel(CONFIG.BASEDATA.ADMIN_USER);
+
+    let admin = CONFIG.BASEDATA.ADMIN_USER;
+
+    const cipher = crypto.createCipher(CONFIG.CRYPTO.ALGORITHM, CONFIG.CRYPTO.PASSWORD);
+    let encrypted = cipher.update(admin.password, 'utf8', 'hex');
+    encrypted = cipher.final('hex');
+    admin.password = encrypted;
+
+    let saveUser = new UserModel(admin);
     saveUser.save(function (err, user) {
       if(!err) {
-        logger.info('User added', user.name);
+        logger.info('User Added -- ', user.name);
       }
     });
   });
@@ -143,6 +158,17 @@ function setupMongooseConnections() {
   });
 }
 
+let addingNeo4jConstraints = function () {
+  let driver = neo4jDriver.driver(CONFIG.NEO4J.neo4jURL,
+    neo4jDriver.auth.basic(CONFIG.NEO4J.usr, CONFIG.NEO4J.pwd), {encrypted: false});
+  let query = `CREATE CONSTRAINT ON (n:${graphConsts.NODE_CANDIDATE})
+    ASSERT n.EmailID IS UNIQUE`;
+  let session = driver.session();
+  session.run(query).then(function(result, err) {
+    session.close();
+  });
+}
+
 // App Constructor function is exported
 module.exports = {
   createApp: createApp,
@@ -150,5 +176,6 @@ module.exports = {
   setupRestRoutes: setupRestRoutes,
   setupMiddlewares: setupMiddlewares,
   setupMongooseConnections: setupMongooseConnections,
+  addingNeo4jConstraints: addingNeo4jConstraints,
   setupWebpack: setupWebpack
 };

@@ -3,6 +3,10 @@ import LinearProgress from 'material-ui/LinearProgress';
 import Request from 'superagent';
 import Moment from 'moment';
 import Paper from 'material-ui/Paper';
+import IconButton from 'material-ui/IconButton';
+import KeyboardArrowDown from 'material-ui/svg-icons/hardware/keyboard-arrow-down';
+import KeyboardArrowUp from 'material-ui/svg-icons/hardware/keyboard-arrow-up';
+import WaveProgress from './waveProgress.jsx'
 
 const styles = {
 	container: {
@@ -27,11 +31,14 @@ export default class WaveDetails extends React.Component {
 		super(props);
 		this.state = {
 			waves: [],
-			activeWaves: []
+			activeWaves: [],
+			showDetails: false,
+			waveDetail: ''
 		},
 		this.getWaves = this.getWaves.bind(this);
 		this.showProgress = this.showProgress.bind(this);
 		this.formatDate = this.formatDate.bind(this);
+		this.WaveDetails = this.WaveDetails.bind(this);
 	}
 	componentWillMount() {
 		this.getWaves();
@@ -69,6 +76,18 @@ export default class WaveDetails extends React.Component {
 		return Moment(date).format("MMM Do YYYY");
 	}
 
+	WaveDetails(val) {
+		let th = this;
+		let value = val;
+		if(th.state.showDetails) {
+			value = ''
+		}
+		this.setState({
+			showDetails: !th.state.showDetails,
+			waveDetail: value
+		})
+	}
+
 	render() {
 		let th = this;
 		return(
@@ -83,7 +102,19 @@ export default class WaveDetails extends React.Component {
 						let progressPercentile = th.showProgress(wave);
 						return (
 							<div style={styles.wave} key={key}>
-								<div style={styles.heading}>{wave.WaveNumber} ({wave.WaveID}) @ {wave.Location} -- {progressPercentile}%</div>
+								<div style={styles.heading}>{wave.WaveID} ({wave.CourseName}) @ {wave.Location} -- {progressPercentile}%
+									<IconButton tooltip="More details" onClick={th.WaveDetails.bind(this, wave.WaveID + ' (' + wave.CourseName + ')')} style={{float:'right'}}>
+										{
+											th.state.waveDetail === '' &&
+											<KeyboardArrowDown/>
+										}
+										{
+											th.state.waveDetail !== '' &&
+											th.state.waveDetail === wave.WaveID + ' (' + wave.CourseName + ')' &&
+											<KeyboardArrowUp/>
+										}
+									</IconButton>
+								</div>
 								<LinearProgress
 									mode="determinate"
 									value={progressPercentile}
@@ -94,6 +125,15 @@ export default class WaveDetails extends React.Component {
 								<span style={{float: 'right'}}>
 									{th.formatDate(wave.EndDate)}
 								</span>
+								{
+									th.state.waveDetail !== '' &&
+									th.state.waveDetail === wave.WaveID + ' (' + wave.CourseName + ')' &&
+									<WaveProgress
+										open = {th.state.showDetails}
+										waveDetails = {th.WaveDetails}
+										wave = {wave}
+									/>
+								}
 							</div>
 						)
 					})

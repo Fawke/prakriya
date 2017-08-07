@@ -32,8 +32,8 @@ const appConfig = {
   production: extend(production, defaults)
 };
 
-process.stdout.write('\nPrakriya configuring for environment: ' + process.env.NODE_ENV);
-process.stdout.write('\nconfig settings: ' + JSON.stringify(appConfig[(process.env
-  .NODE_ENV || 'development')]), null, '\t');
+// process.stdout.write('\nPrakriya configuring for environment: ' + process.env.NODE_ENV);
+// process.stdout.write('\nconfig settings: ' + JSON.stringify(appConfig[(process.env
+//  .NODE_ENV || 'development')]), null, '\t');
 
 module.exports = appConfig[(process.env.NODE_ENV || 'development')];

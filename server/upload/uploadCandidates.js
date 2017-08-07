@@ -35,18 +35,19 @@ let registerCandidates = function () {
 
 				async.each(cadetColln,
 					function (cadetObj, callback) {
+						console.log(cadetObj);
 						dashboardNeo4jController.addCadet(cadetObj, function(cadet) {
-									logger.debug('Added the cadet', cadet)
-						      importedCadets.push(cadet);
-						      callback();
-								}, function (err) {
-									let cadet = {}
-					        logger.error('Error in adding a cadet in the neo4j',  err)
-					        cadet.eid = cadetObj.EmployeeID;
-					        cadet.errmsg = 'Duplicate cadet error';
-					        failedCadets.push(cadet);
-					        callback();
-								})
+							logger.debug('Added the cadet', cadet)
+				      importedCadets.push(cadet);
+				      callback();
+						}, function (err) {
+							let cadet = {}
+			        logger.error('Error in adding a cadet in the neo4j',  err)
+			        cadet.eid = cadetObj.EmployeeID;
+			        cadet.errmsg = 'Duplicate cadet error';
+			        failedCadets.push(cadet);
+			        callback();
+						})
 					},
 					function (err3) {
 						logger.debug('Final function', err3);

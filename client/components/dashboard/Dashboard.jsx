@@ -10,6 +10,7 @@ import WiproAdmin from './WiproAdmin.jsx';
 import SRAdmin from './SRAdmin.jsx';
 import Mentor from './Mentor.jsx';
 import Candidate from './Candidate.jsx';
+import app from '../../styles/app.json';
 
 const styles = {
 	lastLogin: {
@@ -51,7 +52,7 @@ export default class Dashboard extends React.Component {
 	render() {
 		return(
 			<div>
-				<h2 style={styles.heading}>Dashboard</h2>
+				<h2 style={app.heading}>Dashboard</h2>
 				<Grid>
 					<Row>
 						<Col md={3} mdOffset={9} >
@@ -61,7 +62,7 @@ export default class Dashboard extends React.Component {
 					  	</Paper>
 					  </Col>
 					</Row>
-					<br />
+					<br/>
 					<Row>
 						<Col md={12}>
 							{

@@ -92,7 +92,8 @@ export default class ProjectDialog extends React.Component {
 			candidatesName: [] ,
 			candidateIDList: [] ,
 			candidateDelList: [],
-			project: {}
+			project: {},
+			Course: []
 		}
 		this.getWaveIDs = this.getWaveIDs.bind(this)
 		this.handleOpen = this.handleOpen.bind(this);
@@ -152,9 +153,16 @@ export default class ProjectDialog extends React.Component {
 			.get('/dashboard/waveids')
 			.set({'Authorization': localStorage.getItem('token')})
 			.end(function(err, res){
-				th.setState({
-					waves: res.body.waveids
-				})
+				let wave = [];
+	      let course = [];
+	      res.body.waveids.map(function (waveDetails) {
+	        wave.push(waveDetails.waveID);
+	        course.push(waveDetails.course);
+	      })
+	      th.setState({
+	        waves: wave,
+	        Course: course
+	      })
 			})
 	}
 
@@ -174,10 +182,12 @@ export default class ProjectDialog extends React.Component {
 			let candidateList = []
 			let candidateName = []
 			let candidateID = []
-			Request
+			let wave = waveID.split('(')[0].trim();
+	    let course = waveID.split('(')[1].split(')')[0];
+	    Request
 				.post('/dashboard/cadetsofwave')
 				.set({'Authorization': localStorage.getItem('token')})
-				.send({waveid: waveID})
+				.send({waveid: wave, course: course})
 				.end(function(err, res){
 					res.body.map(function(candidate,index) {
 						candidateList.push(candidate)
@@ -564,7 +574,7 @@ export default class ProjectDialog extends React.Component {
 						>
 							{
 								th.state.waves.map(function(val, key) {
-									return <MenuItem key={key} value={val} primaryText={val} />
+									return <MenuItem key={key} value={val + ' (' + th.state.Course[key] + ')'} primaryText={val + ' (' + th.state.Course[key] + ')'} />
 								})
 							}
 					</SelectField>

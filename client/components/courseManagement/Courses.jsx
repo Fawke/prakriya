@@ -8,6 +8,7 @@ import RestoreCourse from './RestoreCourse.jsx';
 import AddCourse from './AddCourse.jsx';
 import Assignments from './Assignments.jsx';
 import Schedule from './Schedule.jsx';
+import SkillSet from './SkillSet.jsx';
 import Snackbar from 'material-ui/Snackbar';
 
 const styles = {
@@ -43,6 +44,7 @@ export default class Courses extends React.Component {
 		super(props);
 		this.state = {
 			courses: [],
+			skills: [],
 			currentCard: {},
 			openDialog: false,
 			assignmentsDialog: false,
@@ -50,6 +52,9 @@ export default class Courses extends React.Component {
 			open: false,
 			message: ''
 		}
+
+		this.getSkillSet = this.getSkillSet.bind(this);
+		this.addNewSkill = this.addNewSkill.bind(this);
 		this.getCourses = this.getCourses.bind(this);
 		this.updateCourse = this.updateCourse.bind(this);
 		this.deleteCourse = this.deleteCourse.bind(this);
@@ -69,6 +74,7 @@ export default class Courses extends React.Component {
 
 	componentWillMount() {
 		this.getCourses();
+		this.getSkillSet();
 	}
 
 	openRestoreDialog() {
@@ -89,6 +95,37 @@ export default class Courses extends React.Component {
 		})
 		this.restoreCourses(actions);
 	}
+
+	getSkillSet() {
+    let th = this;
+    Request
+    .get('/dashboard/skillset')
+    .set({'Authorization': localStorage.getItem('token')})
+    .end(function(err, res) {
+      if (err)
+        console.log(err);
+      else {
+        th.setState({skills: res.body});
+      }
+    });
+  }
+
+	addNewSkill(skill) {
+    let th = this;
+		let skills = this.state.skills;
+    Request
+    .post('/dashboard/createnewskill')
+    .set({'Authorization': localStorage.getItem('token')})
+    .send({skill: skill})
+    .end(function(err, res) {
+      if (err)
+        console.log(err);
+      else {
+        skills.push(skill);
+        th.setState({skills: skills});
+      }
+    });
+  }
 
 	getCourses() {
 		let th = this;
@@ -263,7 +300,8 @@ export default class Courses extends React.Component {
 			<div>
 				<div>
 				<h2 style={styles.heading}>Course Management</h2>
-				<AddCourse handleAdd={this.addCourse}/>
+				<AddCourse handleAdd={this.addCourse} skills={this.state.skills}/>
+				<SkillSet skills={this.state.skills} addNewSkill={this.addNewSkill}/>
 				<Grid style={styles.grid}>
 					<Row>
 						{

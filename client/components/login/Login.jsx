@@ -119,8 +119,20 @@ export default class Login extends React.Component {
 							<div style={{position: 'relative', display: 'inline-block', width: '100%'}}>
 								{
 									this.state.passwordType == 'password' ?
-									<VisibilityIcon style={{position: 'absolute', right: 0, top: 35, width: 20, height: 20, zIndex: 1, cursor: 'pointer'}} onTouchTap={this.toggleShowPassword}/> :
-									<VisibilityOffIcon style={{position: 'absolute', right: 0, top: 35, width: 20, height: 20, zIndex: 1, cursor: 'pointer'}} onTouchTap={this.toggleShowPassword}/>
+									<VisibilityIcon style={{
+										position: 'absolute',
+										right: 0, top: 35,
+										width: 20, height: 20,
+										zIndex: 1, cursor: 'pointer',
+										color: 'rgba(255, 255, 255, 0.87)'
+									}} onTouchTap={this.toggleShowPassword}/> :
+									<VisibilityOffIcon style={{
+										position: 'absolute',
+										right: 0, top: 35,
+										width: 20, height: 20,
+										zIndex: 1, cursor: 'pointer',
+										color: 'rgba(255, 255, 255, 0.87)'
+									}} onTouchTap={this.toggleShowPassword}/>
 								}
 								<TextField
 		 					 	floatingLabelText="Password"
@@ -134,7 +146,7 @@ export default class Login extends React.Component {
 							  type="submit"
 								primary={true}
 								onClick={this.login}
-								style={{width: '100%'}} 
+								style={{width: '100%'}}
 							>
 								LOGIN
 							</RaisedButton>
